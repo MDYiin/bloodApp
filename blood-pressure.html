@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f3f6f1">
   <title>血壓紀錄 | 日常健康v1</title>
+  <script>
+    (() => {
+      const key = "personal-blood-pressure-theme-v1";
+      let savedTheme = null;
+      try {
+        const saved = localStorage.getItem(key);
+        if (saved === "light" || saved === "dark") savedTheme = saved;
+      } catch {}
+      const theme = savedTheme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.dataset.themePreference = savedTheme ? "manual" : "system";
+      document.querySelector('meta[name="theme-color"]').setAttribute("content", theme === "dark" ? "#151d1a" : "#f3f6f1");
+    })();
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -13,15 +27,74 @@
       --ink: #202b27;
       --muted: #748079;
       --line: #e2e8e1;
+      --line-soft: #edf1ec;
+      --pattern: #dce5dc;
+      --label: #57635b;
+      --label-muted: #919a94;
+      --placeholder: #a5ada7;
       --green: #27785f;
       --green-dark: #1d5e4a;
       --green-soft: #e9f4ed;
+      --green-text: #587065;
       --coral: #c94f43;
       --coral-soft: #fbefec;
+      --record-line: #e8ede7;
+      --record-date: #6f7a73;
+      --record-strong: #39453e;
+      --record-muted: #87918a;
+      --medication-ink: #51645a;
+      --medication-paper: #f2f5f1;
+      --delete-ink: #818b84;
+      --delete-line: #e6ebe5;
+      --delete-hover: #fff9f8;
+      --empty-strong: #435047;
+      --focus: #9cc9ae;
+      --on-accent: #fff;
+      --brand-mark-ink: #fff;
+      --local-dot: #64a77d;
+      --toast-ink: #fff;
+      --toast-paper: #263b31;
       --shadow: 0 14px 40px rgb(34 54 43 / 7%);
       font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
       font-synthesis: none;
       text-rendering: optimizeLegibility;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #151d1a;
+      --surface: #202a26;
+      --ink: #e5eee8;
+      --muted: #a2b0a8;
+      --line: #394740;
+      --line-soft: #313d36;
+      --pattern: #354139;
+      --label: #c0ccc4;
+      --label-muted: #9aa79f;
+      --placeholder: #84938a;
+      --green: #65b895;
+      --green-dark: #7bc9a5;
+      --green-soft: #263d32;
+      --green-text: #b6d2c2;
+      --coral: #f08a7e;
+      --coral-soft: #482e2c;
+      --record-line: #354139;
+      --record-date: #b0bdb5;
+      --record-strong: #dce7df;
+      --record-muted: #a0aea5;
+      --medication-ink: #c4d2c8;
+      --medication-paper: #2b3831;
+      --delete-ink: #b0bdb5;
+      --delete-line: #435149;
+      --delete-hover: #3c2b29;
+      --empty-strong: #d2ded6;
+      --focus: #83cba5;
+      --on-accent: #153328;
+      --brand-mark-ink: #153328;
+      --local-dot: #75c696;
+      --toast-ink: #e5eee8;
+      --toast-paper: #293a32;
+      --shadow: 0 14px 40px rgb(0 0 0 / 24%);
     }
 
     * { box-sizing: border-box; }
@@ -31,46 +104,51 @@
       margin: 0;
       color: var(--ink);
       background-color: var(--paper);
-      background-image: radial-gradient(#dce5dc 0.75px, transparent 0.75px);
+      background-image: radial-gradient(var(--pattern) 0.75px, transparent 0.75px);
       background-size: 19px 19px;
     }
     button, input, select, textarea { font: inherit; }
     .page { width: min(1110px, calc(100% - 48px)); margin: 0 auto; padding: 27px 0 52px; }
-    .topline { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid #dfe6de; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
     .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-mark { display: grid; width: 35px; height: 35px; place-items: center; color: #fff; background: var(--green); border-radius: 10px; }
+    .brand-mark { display: grid; flex: 0 0 35px; width: 35px; height: 35px; place-items: center; color: var(--brand-mark-ink); background: var(--green); border-radius: 10px; }
     .brand-mark svg { width: 19px; height: 19px; }
     .brand-name { font-size: 13px; font-weight: 750; }
     .brand-caption { margin-top: 2px; color: var(--muted); font-size: 9px; letter-spacing: 1px; }
-    .local-tag { display: inline-flex; align-items: center; gap: 7px; color: #587065; font-size: 10px; }
-    .local-dot { width: 7px; height: 7px; background: #64a77d; border-radius: 50%; }
+    .topline-actions { display: flex; align-items: center; gap: 13px; }
+    .theme-toggle { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 7px; padding: 0 10px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 700; }
+    .theme-toggle:hover { border-color: var(--green); }
+    .theme-toggle:focus-visible, .delete-button:focus-visible, .submit:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+    .theme-toggle svg { width: 14px; height: 14px; color: var(--green); }
+    .local-tag { display: inline-flex; align-items: center; gap: 7px; color: var(--green-text); font-size: 10px; }
+    .local-dot { width: 7px; height: 7px; background: var(--local-dot); border-radius: 50%; }
     .intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin: 31px 0 22px; }
     .eyebrow { margin-bottom: 8px; color: var(--green); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }
     h1 { margin: 0; font-size: 27px; font-weight: 760; }
     .subtitle { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
-    .disclaimer { max-width: 240px; color: #808a83; font-size: 9px; line-height: 1.65; text-align: right; }
+    .disclaimer { max-width: 240px; color: var(--muted); font-size: 9px; line-height: 1.65; text-align: right; }
     .layout { display: grid; grid-template-columns: minmax(300px, .82fr) minmax(0, 1.45fr); gap: 17px; align-items: start; }
     .panel { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow); }
-    .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 17px 19px 14px; border-bottom: 1px solid #edf1ec; }
+    .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 17px 19px 14px; border-bottom: 1px solid var(--line-soft); }
     .panel-title { font-size: 12px; font-weight: 750; }
     .panel-caption { margin-top: 4px; color: var(--muted); font-size: 9px; }
     .form { display: grid; gap: 14px; padding: 17px 19px 19px; }
     .pressure-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
     .field { display: grid; gap: 6px; min-width: 0; }
-    .field label { color: #57635b; font-size: 10px; font-weight: 700; }
-    .field label span { color: #919a94; font-size: 9px; font-weight: 500; }
+    .field label { color: var(--label); font-size: 10px; font-weight: 700; }
+    .field label span { color: var(--label-muted); font-size: 9px; font-weight: 500; }
     .field input, .field select, .field textarea {
       width: 100%;
       min-height: 39px;
       padding: 8px 10px;
       color: var(--ink);
-      background: #fff;
-      border: 1px solid #dce4dc;
+      background: var(--surface);
+      border: 1px solid var(--line);
       border-radius: 6px;
       font-size: 11px;
     }
-    .field input::placeholder, .field textarea::placeholder { color: #a5ada7; }
-    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid #9cc9ae; outline-offset: 1px; border-color: var(--green); }
+    .field input::placeholder, .field textarea::placeholder { color: var(--placeholder); }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--green); }
     .field textarea { min-height: 72px; resize: vertical; }
     .submit {
       display: inline-flex;
@@ -79,7 +157,7 @@
       justify-content: center;
       gap: 8px;
       margin-top: 1px;
-      color: #fff;
+      color: var(--on-accent);
       background: var(--green);
       border: 0;
       border-radius: 6px;
@@ -100,30 +178,30 @@
       gap: 8px;
       align-items: center;
       padding: 13px 12px;
-      border: 1px solid #e8ede7;
+      border: 1px solid var(--record-line);
       border-radius: 7px;
       animation: enter .2s ease both;
     }
     @keyframes enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    .record-date { color: #6f7a73; font-size: 9px; line-height: 1.55; }
-    .record-date strong { display: block; color: #39453e; font-size: 10px; font-weight: 700; }
+    .record-date { color: var(--record-date); font-size: 9px; line-height: 1.55; }
+    .record-date strong { display: block; color: var(--record-strong); font-size: 10px; font-weight: 700; }
     .reading { min-width: 0; }
-    .reading-label { color: #87918a; font-size: 8px; }
+    .reading-label { color: var(--record-muted); font-size: 8px; }
     .reading-value { margin-top: 4px; font-size: 17px; font-weight: 780; line-height: 1; }
-    .reading-value small { margin-left: 3px; color: #87918a; font-size: 8px; font-weight: 500; }
-    .medication { display: inline-block; max-width: 100%; overflow: hidden; padding: 5px 7px; color: #51645a; background: #f2f5f1; border-radius: 5px; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .reading-value small { margin-left: 3px; color: var(--record-muted); font-size: 8px; font-weight: 500; }
+    .medication { display: inline-block; max-width: 100%; overflow: hidden; padding: 5px 7px; color: var(--medication-ink); background: var(--medication-paper); border-radius: 5px; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
     .medication.taken { color: var(--green-dark); background: var(--green-soft); }
-    .medication.missed { color: #a5483e; background: var(--coral-soft); }
-    .record-note { grid-column: 2 / -1; overflow-wrap: anywhere; color: #748079; font-size: 9px; line-height: 1.5; }
+    .medication.missed { color: var(--coral); background: var(--coral-soft); }
+    .record-note { grid-column: 2 / -1; overflow-wrap: anywhere; color: var(--muted); font-size: 9px; line-height: 1.5; }
     .record-actions { display: flex; justify-content: flex-end; }
-    .delete-button { min-width: 31px; min-height: 29px; padding: 0 7px; color: #818b84; background: #fff; border: 1px solid #e6ebe5; border-radius: 5px; cursor: pointer; font-size: 9px; }
-    .delete-button:hover { color: var(--coral); border-color: #e8b6b0; background: #fff9f8; }
+    .delete-button { min-width: 31px; min-height: 29px; padding: 0 7px; color: var(--delete-ink); background: var(--surface); border: 1px solid var(--delete-line); border-radius: 5px; cursor: pointer; font-size: 9px; }
+    .delete-button:hover { color: var(--coral); border-color: var(--coral); background: var(--delete-hover); }
     .empty { display: grid; min-height: 230px; place-content: center; justify-items: center; gap: 9px; padding: 28px 15px; color: var(--muted); text-align: center; }
     .empty-mark { display: grid; width: 38px; height: 38px; place-items: center; color: var(--green); background: var(--green-soft); border-radius: 50%; }
     .empty-mark svg { width: 19px; height: 19px; }
-    .empty strong { color: #435047; font-size: 11px; }
+    .empty strong { color: var(--empty-strong); font-size: 11px; }
     .empty span { font-size: 9px; }
-    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 2; padding: 11px 15px; color: #fff; background: #263b31; border-radius: 7px; box-shadow: var(--shadow); font-size: 10px; opacity: 0; pointer-events: none; transform: translateY(7px); transition: opacity .2s ease, transform .2s ease; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 2; padding: 11px 15px; color: var(--toast-ink); background: var(--toast-paper); border-radius: 7px; box-shadow: var(--shadow); font-size: 10px; opacity: 0; pointer-events: none; transform: translateY(7px); transition: opacity .2s ease, transform .2s ease; }
     .toast.show { opacity: 1; transform: translateY(0); }
     @media (max-width: 850px) {
       .layout { grid-template-columns: minmax(0, 1fr); }
@@ -132,6 +210,9 @@
     }
     @media (max-width: 560px) {
       .page { width: calc(100% - 28px); padding-top: 17px; }
+      .topline-actions { gap: 9px; }
+      .theme-toggle { gap: 5px; padding: 0 7px; }
+      .local-tag { gap: 0; font-size: 0; }
       .intro { align-items: flex-start; margin: 24px 0 17px; }
       h1 { font-size: 23px; }
       .disclaimer { max-width: 140px; padding-top: 6px; font-size: 8px; }
@@ -143,8 +224,12 @@
       .record-date { font-size: 8px; }
       .record-date strong { font-size: 9px; }
       .medication { padding: 5px; font-size: 8px; }
-      .record-note { grid-column: 1 / -1; padding-top: 4px; border-top: 1px solid #eef1ed; }
+      .record-note { grid-column: 1 / -1; padding-top: 4px; border-top: 1px solid var(--line-soft); }
       .toast { right: 12px; bottom: 12px; left: 12px; text-align: center; }
+    }
+    @media (max-width: 360px) {
+      .local-tag { display: none; }
+      .record { grid-template-columns: minmax(64px, 1fr) repeat(3, minmax(0, .75fr)) 31px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -158,7 +243,13 @@
         <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.5c-2.6 3.4-6.5 7.3-6.5 11.1a6.5 6.5 0 0 0 13 0c0-3.8-3.9-7.7-6.5-11.1Z"/><path d="M9 15.5a3 3 0 0 0 3 3"/></svg></span>
         <span><span class="brand-name">日常健康</span><span class="brand-caption">PERSONAL HEALTH LOG</span></span>
       </div>
-      <div class="local-tag"><span class="local-dot"></span>僅儲存在此裝置</div>
+      <div class="topline-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切換為深色主題" aria-pressed="false">
+          <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.2 15.3A8.4 8.4 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"/></svg>
+          <span id="theme-label">深色</span>
+        </button>
+        <div class="local-tag" title="僅儲存在此裝置"><span class="local-dot"></span>僅儲存在此裝置</div>
+      </div>
     </header>
 
     <section class="intro" aria-labelledby="page-title">
@@ -192,12 +283,46 @@
   <script>
     (() => {
       const STORAGE_KEY = "personal-blood-pressure-records-v1";
+      const THEME_STORAGE_KEY = "personal-blood-pressure-theme-v1";
+      const root = document.documentElement;
+      const themeToggle = document.getElementById("theme-toggle");
+      const themeLabel = document.getElementById("theme-label");
+      const themeIcon = document.getElementById("theme-icon");
+      const themeColor = document.querySelector('meta[name="theme-color"]');
       const form = document.getElementById("reading-form");
       const list = document.getElementById("records-list");
       const count = document.getElementById("record-count");
       const toast = document.getElementById("toast");
+      const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
       let readings = loadReadings();
       let toastTimer;
+
+      function applyTheme(theme) {
+        const isDark = theme === "dark";
+        root.dataset.theme = isDark ? "dark" : "light";
+        themeToggle.setAttribute("aria-pressed", String(isDark));
+        themeToggle.setAttribute("aria-label", `切換為${isDark ? "淺色" : "深色"}主題`);
+        themeLabel.textContent = isDark ? "淺色" : "深色";
+        themeIcon.innerHTML = isDark
+          ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>'
+          : '<path d="M20.2 15.3A8.4 8.4 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"/>';
+        themeColor.setAttribute("content", isDark ? "#151d1a" : "#f3f6f1");
+      }
+
+      themeToggle.addEventListener("click", () => {
+        const theme = root.dataset.theme === "dark" ? "light" : "dark";
+        applyTheme(theme);
+        root.dataset.themePreference = "manual";
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, theme);
+        } catch {
+          showToast("無法儲存主題偏好，請檢查瀏覽器儲存空間。");
+        }
+      });
+
+      colorScheme.addEventListener("change", (event) => {
+        if (root.dataset.themePreference !== "manual") applyTheme(event.matches ? "dark" : "light");
+      });
 
       function loadReadings() {
         try {
